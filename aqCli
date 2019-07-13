@@ -4,26 +4,59 @@
 
 import argparse
 import logging
+import sys
 
-from aquosRemote.aquos import AquosTV
+try:
+    from aquosRemote.aquos import AquosTV
+    import toml
+except ImportError:
+    print("Please `pip install aquosRemote toml`")
+    sys.exit(1)
 
-parser = argparse.ArgumentParser(description="Process some integers.")
-parser.add_argument("command", help="the command", nargs="*")
-args = parser.parse_args()
 
-print(args)
+def do_work(args):
+    config_dict = toml.load("config.toml", _dict=dict)
+    if (
+        "username" in config_dict
+        and "password" in config_dict
+        and "host" in config_dict
+    ):
+        host = config_dict["host"]
+        username = config_dict["username"]
+        password = config_dict["password"]
+    else:
+        print("ERROR: please create a config.toml with host, username, and password")
 
-# TODO: take args or use config file for ip, user, pass
-aquos = AquosTV("sharp_tv", username="aaa", password="aaa")
-if args.command[0] == "send_command" and len(args.command) == 2:
-    # send a raw command
-    raw_cmd = args.command[1].strip()
-    logging.info("raw_cmd: '{}'".format(raw_cmd))
-    aquos.send_command(raw_cmd)
-elif len(args.command) == 1:
-    # send a command
-    if hasattr(aquos, args.command[0]):
-        method_to_run = getattr(aquos, args.command[0])
-        method_to_run()
-else:
-    print("ERROR: invalid input. check help.")
+    aquos = AquosTV(host, username=username, password=password)
+    if not args.command:
+        print("ERROR: please specify a command or a raw command")
+        sys.exit(1)
+    elif len(args.command) == 2 and args.command[0] == "send_command":
+        # send a raw command
+        raw_cmd = args.command[1].strip()
+        logging.info("raw_cmd: '{}'".format(raw_cmd))
+        aquos.send_command(raw_cmd)
+    elif len(args.command) == 1:
+        # send a command
+        if hasattr(aquos, args.command[0]):
+            method_to_run = getattr(aquos, args.command[0])
+            method_to_run()
+        else:
+            print("ERROR: invalid command")
+    else:
+        print("ERROR: invalid input. check help.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Control a Sharp Aquos TV.")
+    parser.add_argument(
+        "command",
+        help="the command to execute, or 'send_command' with a raw command",
+        nargs="*",
+    )
+    the_args = parser.parse_args()
+    do_work(the_args)
+
+
+if __name__ == "__main__":
+    main()
