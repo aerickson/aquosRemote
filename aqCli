@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+# python2 only for now
+
+import argparse
+import logging
+
+from aquosRemote.aquos import AquosTV
+
+parser = argparse.ArgumentParser(description="Process some integers.")
+parser.add_argument("command", help="the command", nargs="*")
+args = parser.parse_args()
+
+print(args)
+
+# TODO: take args or use config file for ip, user, pass
+aquos = AquosTV("sharp_tv", username="aaa", password="aaa")
+if args.command[0] == "send_command" and len(args.command) == 2:
+    # send a raw command
+    raw_cmd = args.command[1].strip()
+    logging.info("raw_cmd: '{}'".format(raw_cmd))
+    aquos.send_command(raw_cmd)
+elif len(args.command) == 1:
+    # send a command
+    if hasattr(aquos, args.command[0]):
+        method_to_run = getattr(aquos, args.command[0])
+        method_to_run()
+else:
+    print("ERROR: invalid input. check help.")
