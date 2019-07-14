@@ -4,6 +4,7 @@
 
 import argparse
 import logging
+import os
 import sys
 
 try:
@@ -15,15 +16,19 @@ except ImportError:
 
 
 def do_work(args):
-    config_dict = toml.load("config.toml", _dict=dict)
-    if (
-        "username" in config_dict
-        and "password" in config_dict
-        and "host" in config_dict
-    ):
-        host = config_dict["host"]
-        username = config_dict["username"]
-        password = config_dict["password"]
+    current_file = os.path.realpath(__file__)
+    current_dir = os.path.dirname(current_file)
+    cfg_file = os.path.join(current_dir, "config.toml")
+    if os.path.exists(cfg_file):
+        config_dict = toml.load(cfg_file, _dict=dict)
+        if (
+            "username" in config_dict
+            and "password" in config_dict
+            and "host" in config_dict
+        ):
+            host = config_dict["host"]
+            username = config_dict["username"]
+            password = config_dict["password"]
     else:
         print("ERROR: please create a config.toml with host, username, and password")
 
