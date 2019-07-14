@@ -55,7 +55,10 @@ def do_work(args):
         if hasattr(aquos, args.command[0]):
             method_to_run = getattr(aquos, args.command[0])
             try:
-                method_to_run(args.command[1])
+                if len(args.command) = 2:
+                    method_to_run(args.command[1])
+                else:
+                    method_to_run()
             except AquosException as e:
                 logging.error("ERROR: Command failed!")
                 logging.error(e)
