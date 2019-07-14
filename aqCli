@@ -9,6 +9,7 @@ import sys
 
 try:
     from aquosRemote.aquos import AquosTV
+    from aquosRemote.aquos import AquosException
     import toml
 except ImportError:
     print("Please `pip install aquosRemote toml`")
@@ -16,6 +17,7 @@ except ImportError:
 
 
 def do_work(args):
+    rc = 0
     current_file = os.path.realpath(__file__)
     current_dir = os.path.dirname(current_file)
     # TODO: load this from ~/.aqcli.toml or something vs relative to script
@@ -37,21 +39,34 @@ def do_work(args):
     aquos = AquosTV(host, username=username, password=password)
     if not args.command:
         print("ERROR: please specify a command or a raw command")
-        sys.exit(1)
+        rc = 1
     elif len(args.command) == 2 and args.command[0] == "send_command":
         # send a raw command
         raw_cmd = args.command[1].strip()
         logging.info("raw_cmd: '{}'".format(raw_cmd))
-        aquos.send_command(raw_cmd)
+        try:
+            aquos.send_command(raw_cmd)
+        except AquosException as e:
+            logging.error("ERROR: Command failed!")
+            logging.error(e)
+            rc = 1
     elif len(args.command) == 1 or len(args.command) == 2:
         # send a command
         if hasattr(aquos, args.command[0]):
             method_to_run = getattr(aquos, args.command[0])
-            method_to_run(args.command[1])
+            try:
+                method_to_run(args.command[1])
+            except AquosException as e:
+                logging.error("ERROR: Command failed!")
+                logging.error(e)
+                rc = 1
         else:
             print("ERROR: invalid command")
+            rc = 1
     else:
         print("ERROR: invalid input. check help.")
+        rc = 1
+    return rc
 
 
 def main():
@@ -62,7 +77,8 @@ def main():
         nargs="*",
     )
     the_args = parser.parse_args()
-    do_work(the_args)
+    rc = do_work(the_args)
+    sys.exit(rc)
 
 
 if __name__ == "__main__":
