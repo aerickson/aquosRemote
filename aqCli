@@ -18,7 +18,9 @@ except ImportError:
 def do_work(args):
     current_file = os.path.realpath(__file__)
     current_dir = os.path.dirname(current_file)
+    # TODO: load this from ~/.aqcli.toml or something vs relative to script
     cfg_file = os.path.join(current_dir, "config.toml")
+
     if os.path.exists(cfg_file):
         config_dict = toml.load(cfg_file, _dict=dict)
         if (
@@ -41,11 +43,11 @@ def do_work(args):
         raw_cmd = args.command[1].strip()
         logging.info("raw_cmd: '{}'".format(raw_cmd))
         aquos.send_command(raw_cmd)
-    elif len(args.command) == 1:
+    elif len(args.command) == 1 or len(args.command) == 2:
         # send a command
         if hasattr(aquos, args.command[0]):
             method_to_run = getattr(aquos, args.command[0])
-            method_to_run()
+            method_to_run(args.command[1])
         else:
             print("ERROR: invalid command")
     else:
